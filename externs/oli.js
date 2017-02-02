@@ -372,3 +372,35 @@ oli.source.Vector.Event = function() {};
  * @type {ol.Feature|undefined}
  */
 oli.source.Vector.Event.prototype.feature;
+
+//===========================================================
+// BENTLEY CUSTOMIZATION - Feature=SnapEvent
+/**
+ * @interface
+ * @param {ol.interaction.SnapEventType} type Type.
+ * @param {ol.Coordinate} vertex The vertex coordinates
+ * @param {ol.Pixel} vertexPixel The vertex pixels
+ * @param {ol.Feature} feature The feature snapped to.
+ */
+oli.interaction.SnapEvent = function(type, vertex, vertexPixel, feature) {};
+
+/**
+ * @type {ol.Feature}
+ */
+oli.interaction.SnapEvent.prototype.snappedFeature;
+
+/**
+ * @type {ol.Coordinate}
+ */
+oli.interaction.SnapEvent.prototype.vertex;
+
+/**
+ * @type {ol.Pixel}
+ */
+oli.interaction.SnapEvent.prototype.vertexPixel;
+
+/**
+ * @type {ol.Feature}
+ */
+oli.interaction.SnapEvent.prototype.feature;
+//===========================================================

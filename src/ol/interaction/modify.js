@@ -966,6 +966,17 @@ ol.interaction.Modify.prototype.setGeometryCoordinates_ = function(geometry, coo
   this.changingFeature_ = false;
 };
 
+//===========================================================
+// BENTLEY CUSTOMIZATION	Feature=ExposeModifyOverlay
+/**
+ * Get the draw overlay where sketch features are drawn.
+ * @return {ol.layer.Vector} drawing overlay
+ * @api
+ */
+ol.interaction.Modify.prototype.getOverlay = function() {
+  return this.overlay_;
+};
+//===========================================================
 
 /**
  * @param {ol.geom.SimpleGeometry} geometry Geometry.
