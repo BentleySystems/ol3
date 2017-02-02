@@ -821,6 +821,29 @@ ol.interaction.Draw.getMode_ = function(type) {
   return /** @type {!ol.interaction.Draw.Mode_} */ (mode);
 };
 
+//===========================================================
+// BENTLEY CUSTOMIZATION - Feature=ExposeDrawOverlay
+/**
+ * Get the draw overlay where sketch features are drawn.
+ * @return {ol.layer.Vector} drawing overlay 
+ * @api
+ */
+ol.interaction.Draw.prototype.getOverlay = function() {
+  return this.overlay_;
+};
+//===========================================================
+
+//===========================================================
+// BENTLEY CUSTOMIZATION - Feature=ExposeSketchFeature
+/**
+ * Get the Sketch Feature
+ * @return {ol.Feature} sketch feature
+ * @api
+ */
+ol.interaction.Draw.prototype.getSketchFeature = function() {
+  return this.sketchFeature_;
+};
+//===========================================================
 
 /**
  * Draw mode.  This collapses multi-part geometry types with their single-part
