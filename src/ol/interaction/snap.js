@@ -1,5 +1,9 @@
 goog.provide('ol.interaction.Snap');
-
+//===========================================================
+// BENTLEY CUSTOMIZATION	Feature=SnapEvent
+goog.provide('ol.interaction.SnapEvent');
+goog.provide('ol.interaction.SnapEventType');
+//===========================================================
 goog.require('ol');
 goog.require('ol.Collection');
 goog.require('ol.CollectionEventType');
@@ -14,6 +18,66 @@ goog.require('ol.source.Vector');
 goog.require('ol.source.VectorEventType');
 goog.require('ol.structs.RBush');
 
+//===========================================================
+// BENTLEY CUSTOMIZATION	Feature=SnapEvent
+/**
+* @enum {string}
+*/
+ol.interaction.SnapEventType = {
+    SNAP: 'snap',
+    UNSNAP: 'unsnap'
+};
+
+/**
+* @classdesc
+* Events emitted by {@link ol.interaction.Snap} instances are instances of
+* this type.
+*
+* @constructor
+* @extends {ol.events.Event}
+* @implements {oli.interaction.SnapEvent}
+* @param {ol.interaction.SnapEventType} type Type.
+* @param {ol.Coordinate} vertex The vertex coordinates
+* @param {ol.Pixel} vertexPixel The vertex pixels
+* @param {ol.Feature} feature The feature snapped to.
+* @api stable
+*/
+ol.interaction.SnapEvent = function (type, vertex, vertexPixel, feature) {
+
+  ol.events.Event.call(this, type);
+	
+  /**
+   * The feature snapped to.
+   * @type {ol.Feature}
+   * @api stable
+   */
+    this.snappedFeature = feature;
+	
+	
+  /**
+   * The vertex coordinates
+   * @type {ol.Coordinate}
+   * @api stable
+   */
+    this.vertex = vertex;
+
+  /**
+   * The vertex pixels.
+   * @type {ol.Pixel}
+   * @api stable
+   */
+	this.vertexPixel = vertexPixel;
+
+  /**
+   * The feature being drawn.
+   * @type {ol.Feature}
+   * @api stable
+   */
+    this.feature = feature;
+
+};
+ol.inherits(ol.interaction.SnapEvent, ol.events.Event);
+//===========================================================
 
 /**
  * @classdesc
@@ -64,6 +128,29 @@ ol.interaction.Snap = function(opt_options) {
    * @type {boolean}
    */
   this.edge_ = options.edge !== undefined ? options.edge : true;
+
+  //==================================================================
+  // BENTLEY CUSTOMIZATION	Feature=SnapToEndVerticesOnly
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.snapToEndVerticesOnly_ = goog.isDef(options.snapToEndVerticesOnly) ?
+      options.snapToEndVerticesOnly : false;
+	if (this.snapToEndVerticesOnly_) {
+      this.vertex_ = true;
+      this.edge_ = false;
+	}
+  //==================================================================
+
+  //==================================================================
+  // BENTLEY CUSTOMIZATION	Feature=SnapEvent
+  /**
+   * @type {boolean}
+   * @private
+   */
+  this.wasSnapped_ = false;
+  //==================================================================
 
   /**
    * @type {ol.Collection.<ol.Feature>}
@@ -366,6 +453,10 @@ ol.interaction.Snap.prototype.snapTo = function(pixel, pixelCoordinate, map) {
         vertex = squaredDist1 > squaredDist2 ?
             closestSegment[1] : closestSegment[0];
         vertexPixel = map.getPixelFromCoordinate(vertex);
+        //==================================================================
+        // BENTLEY CUSTOMIZATION	Feature=SnapEvent,SnapToVerticesOnly
+        snapped = ol.interaction.Snap.prototype.snappedToVertexCustom(this, vertexPixel, segments, snapped, vertex);
+        //==================================================================	
       }
     } else if (this.edge_) {
       vertex = (ol.coordinate.closestOnSegment(pixelCoordinate,
@@ -385,6 +476,10 @@ ol.interaction.Snap.prototype.snapTo = function(pixel, pixelCoordinate, map) {
             vertex = squaredDist1 > squaredDist2 ?
                 closestSegment[1] : closestSegment[0];
             vertexPixel = map.getPixelFromCoordinate(vertex);
+            //==================================================================
+            // BENTLEY CUSTOMIZATION		Feature=SnapEvent,SnapToVerticesOnly
+            snapped = ol.interaction.Snap.prototype.snappedToVertexCustom(this, vertexPixel, segments, snapped, vertex);
+            //==================================================================
           }
         }
       }
@@ -392,6 +487,28 @@ ol.interaction.Snap.prototype.snapTo = function(pixel, pixelCoordinate, map) {
     if (snapped) {
       vertexPixel = [Math.round(vertexPixel[0]), Math.round(vertexPixel[1])];
     }
+    //==================================================================
+    // BENTLEY CUSTOMIZATION	Feature=SnapEvent
+		/**
+		 * The message hex ID.
+		 * @type {ol.Feature}
+	  */
+    var snappedFeature;
+    if (goog.isDef(segments) && segments.length > 0) {
+      snappedFeature = /** @type {ol.Feature} */ (segments[0]);
+    }
+    if (snapped) {
+      this.wasSnapped_ = true;
+      this.dispatchEvent(new ol.interaction.SnapEvent(
+        ol.interaction.SnapEventType.SNAP, vertex, vertexPixel, snappedFeature));
+    }
+    else {
+      if (this.wasSnapped_) {
+        this.dispatchEvent(new ol.interaction.SnapEvent(ol.interaction.SnapEventType.UNSNAP, vertex, vertexPixel, snappedFeature));
+      }
+      this.wasSnapped_ = false;
+    }
+    //==================================================================
   }
   return /** @type {ol.SnapResultType} */ ({
     snapped: snapped,
@@ -400,6 +517,38 @@ ol.interaction.Snap.prototype.snapTo = function(pixel, pixelCoordinate, map) {
   });
 };
 
+//==================================================================
+// BENTLEY CUSTOMIZATION	Feature=SnapEvent,SnapToVerticesOnly
+ol.interaction.Snap.prototype.snappedToVertexCustom = function(that, vertexPixel, segments, snapped, vertex) {
+  if (that.snapToEndVerticesOnly_) {
+    snapped = false;
+    var geometry = segments[0].feature.getGeometry();
+    var geometryType = geometry.getType();
+    if (geometryType == 'LineString') {
+      var simpleGeometry =
+        /** @type {ol.geom.SimpleGeometry} */ (geometry);
+      var firstCoordinate =
+          simpleGeometry.getFirstCoordinate();
+      var lastCoordinate = simpleGeometry.getLastCoordinate();
+      if ((vertex[0] == firstCoordinate[0] &&
+          vertex[1] == firstCoordinate[1]) ||
+          (vertex[0] == lastCoordinate[0] &&
+          vertex[1] == lastCoordinate[1])) {
+        snapped = true;
+      }
+    } else if (geometryType == 'Point') {
+      var simpleGeometry =
+        /** @type {ol.geom.SimpleGeometry} */ (geometry);
+      var ptCoordinates = simpleGeometry.getCoordinates();
+      if ((vertex[0] == ptCoordinates[0] &&
+        vertex[1] == ptCoordinates[1])) {
+        snapped = true;
+      }
+    }
+  }
+  return snapped; // return value parameter
+}
+//===========================================================
 
 /**
  * @param {ol.Feature} feature Feature
