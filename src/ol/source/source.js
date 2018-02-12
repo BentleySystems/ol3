@@ -149,6 +149,8 @@ ol.source.Source.prototype.getAttributions = function() {
 /**
  * Get the attribution function for the source.
  * @return {?ol.Attribution2} Attribution function.
+ * @api
+ * BENTLEY CUSTOMIZATIONS - make getAttributions2() available to get Bing attributions
  */
 ol.source.Source.prototype.getAttributions2 = function() {
   return this.attributions2_;
