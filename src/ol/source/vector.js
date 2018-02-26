@@ -44,7 +44,7 @@ ol.source.Vector = function(opt_options) {
     logo: options.logo,
     projection: undefined,
     state: ol.source.State.READY,
-    wrapX: options.wrapX !== undefined ? options.wrapX : true
+    wrapX: options.wrapX !== undefined ? options.wrapX : false
   });
 
   /**
