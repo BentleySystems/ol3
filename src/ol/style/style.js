@@ -291,9 +291,10 @@ ol.style.Style.createFunction = function(obj) {
     if (Array.isArray(obj)) {
       styles = obj;
     } else {
-      ol.asserts.assert(obj instanceof ol.style.Style,
-          41); // Expected an `ol.style.Style` or an array of `ol.style.Style`
-      styles = [obj];
+      ol.asserts.assert(typeof(obj).getZIndex === 'function',
+        41); // Expected an `ol.style.Style` or an array of `ol.style.Style`
+      const style = (obj);
+      styles = [style];
     }
     styleFunction = function() {
       return styles;
